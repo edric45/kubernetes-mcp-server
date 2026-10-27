@@ -1,0 +1,43 @@
+name: VKS toolset image
+
+# Builds the server with the vks toolset and publishes it to this fork's
+# GitHub Container Registry. Runs only in the fork, only for the vks-toolset
+# branch; upstream's release workflows are guarded to their own repository.
+on:
+  push:
+    branches:
+      - vks-toolset
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/kubernetes-mcp-server
+
+jobs:
+  image:
+    if: github.repository == 'edric45/kubernetes-mcp-server'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Unit tests (vks toolset)
+        run: go test ./pkg/toolsets/vks/ ./pkg/toolsets/
+      - name: Build image (linux/amd64, ESXi hosts are x86)
+        run: |
+          docker build --platform linux/amd64 -f Dockerfile \
+            -t "$IMAGE:vks-${GITHUB_SHA::7}" -t "$IMAGE:vks-latest" .
+      - name: Push to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$IMAGE:vks-${GITHUB_SHA::7}"
+          docker push "$IMAGE:vks-latest"
+          echo "Published $IMAGE:vks-${GITHUB_SHA::7}" >> "$GITHUB_STEP_SUMMARY"
