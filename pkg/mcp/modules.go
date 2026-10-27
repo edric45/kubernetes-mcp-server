@@ -13,4 +13,5 @@ import (
 	_ "github.com/containers/kubernetes-mcp-server/pkg/toolsets/otelcol"
 	_ "github.com/containers/kubernetes-mcp-server/pkg/toolsets/tekton"
 	_ "github.com/containers/kubernetes-mcp-server/pkg/toolsets/traces"
+	_ "github.com/containers/kubernetes-mcp-server/pkg/toolsets/vks"
 )
